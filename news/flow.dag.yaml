@@ -1,0 +1,34 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+  PYTHON_KEYRING_BACKEND: keyrings.alt.file.PlaintextKeyring
+inputs:
+  today:
+    type: string
+outputs:
+  answer:
+    type: string
+    reference: ${chat.output}
+nodes:
+- name: get_hf_trends
+  type: python
+  source:
+    type: code
+    path: get_hf_trends.py
+  inputs: {}
+  aggregation: false
+- name: chat
+  type: llm
+  source:
+    type: code
+    path: analyze.jinja2
+  inputs:
+    deployment_name: deepseek-r1
+    max_tokens: "4000"
+    temperature: "0.4"
+    chat_history: []
+    today: ${inputs.today}
+    hf_content: ${get_hf_trends.output}
+    question: Please give me the top 10 trending topics on the Hugging Face Hub today.
+  connection: tencent
+  api: chat
